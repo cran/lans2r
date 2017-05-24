@@ -1,0 +1,121 @@
+---
+title: "NanoSIMS data processing of LANS data in R: how to use `calculate`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Calculate}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, message=FALSE, warning=FALSE}
+library(lans2r)
+library(dplyr)
+library(knitr)
+```
+
+The `?calculate` function is intended to make it easy and efficient to calculate sets of derived quantities (e.g. ratios from `13C` and `12C` data but also from `15N12C` and `14N12C` data). It allows defining exactly how the derived quantities should be calculated but also makes it possible to calculate derived errors and how to go about naming the newly derived quantities. Due to its structure it allows for a large amount of flexibility to cover all possible use cases. This vignettes illustrates some basic examples how this may be used to calculate derived quantities from measured ion currents. The functions `?calculate_ratios`, `?calculate_abundances`, `?calculate_sums` are all pre-implemented examples of using `calculate` to achieve a specific task and work out of the box without additional specifications as illustrated in the main vignette.
+
+#### Test data
+
+For simple illustration, this is a completely contrived artifical data set:
+
+```{r}
+set.seed(123) # set random seed
+test_data <- 
+  data_frame(
+    ROI = rep(1:5, times = 4),
+    variable = rep(LETTERS[1:4], each = 5),
+    value = rpois(20,lambda = 10),
+    sigma = sqrt(value),
+    data_type = "raw"
+  )
+kable(test_data, d = 2)
+```
+
+#### Calculate products and propagate errors
+
+As a first example, using `calculate` to calculate different column products and propagate the error by standard error propagation (assuming no covariance).
+
+```{r}
+# functions to calculate values and errors and derive names from the names of the variables used
+# note that they all have to take the same parameters (even if they are not used)
+my_value_fun <- function(x, y, x.err, y.err) x*y
+my_error_fun <- function(x, y, x.err, y.err) my_value_fun(x, y, x.err, y.err) * sqrt((x.err/x)^2 + (y.err/y)^2)
+my_name_fun <- function(x, y, x.err, y.err) paste0(deparse(substitute(x)), "*", deparse(substitute(y)))
+  
+derived_data <- 
+  test_data %>% 
+  calculate(
+    # data type of the derived quantities (can be anything descriptive)
+    data_type = "derived",
+    # which sets of variables to use for calculations
+    c(D, C, `D sigma`, `C sigma`), c(B, A, `B sigma`, `A sigma`), c(B, C, `B sigma`, `C sigma`),
+    # the function to make the calculations
+    value_fun = my_value_fun, error_fun = my_error_fun, name_fun = my_name_fun)
+kable(derived_data, d = 2)
+```
+
+#### Calculate sums of derived quantities
+
+As a second example, build on the derived quantities to generate custom sums (again with standard error propagation):
+
+```{r}
+my_value_fun <- function(x, y, x.err, y.err) x+y
+my_error_fun <- function(x, y, x.err, y.err) sqrt(x.err^2 + y.err^2)
+my_name_fun <- function(x, y, x.err, y.err) paste0(deparse(substitute(x)), "+", deparse(substitute(y)))
+
+derived_data2 <-
+  derived_data %>% 
+  calculate(
+    # data type of the derived quantities (can be anything descriptive)
+    data_type = "derived2",
+    # which sets of variables to use for calculations
+    c(D, C, `D sigma`, `C sigma`), c(`B*A`, `C`, `B*A sigma`, `C sigma`),
+    # the function to make the calculations
+    value_fun = my_value_fun, error_fun = my_error_fun, name_fun = my_name_fun)
+kable(derived_data2, d = 2)
+```
+
+#### Calculate derived quantity (no error, and direct naming)
+
+To calculate a derived quantity without calculating errors, simply don't supply an error function. Also illustrated here is a simple way to provide specific variable names and defining the functions in line. Note the use of `sum(x)` as well, this can easily be used for calculating normalized derived quantities.
+
+```{r}
+derived_data3 <-
+  derived_data2 %>% 
+  calculate(
+    # data type of the derived quantities (can be anything descriptive)
+    data_type = "special",
+    # which sets of variables to use for calculations
+    c("my_var", A, B, C),
+    # the function to make the calculations
+    value_fun = function(name, x, y, z) x+y^2+z^3/sum(x),
+    name_fun = function(name, x, y, z) name)
+kable(derived_data3, d = 2)
+```
+
+# Data visualization
+
+This data format makes it easy to have arbitrarily elaborate derived quantities and dynamically include the same calculation for multiple sets of variables. It is also a format that lends itself very well to visualiztion:
+
+```{r, fig.width = 9, fig.height = 8}
+library(ggplot2)
+derived_data3 %>% 
+  ggplot() +
+  aes(x = ROI, y = value, ymin = value-sigma, ymax = value+sigma, color = variable) +
+  geom_errorbar() +
+  geom_point() +
+  facet_wrap(~data_type, scales = "free")
+```
+
+
+# Data overview
+
+Lastly, it can be very useful to have data converted to a wide format with all variables and errors next to each other (e.g. for summary tables or export to Excel). This is easily accomplished with *lans2r*'s `spread_data` function:
+
+```{r}
+derived_data3 %>% spread_data() %>% kable(d = 2)
+derived_data3 %>% spread_data(errors = FALSE) %>% kable(d = 2)
+```
+
+

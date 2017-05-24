@@ -1,0 +1,146 @@
+---
+title: "NanoSIMS data processing of LANS data in R"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+This R markdown example demonstrates the basic functionality of the **lans2r** package. 
+
+## Load data
+
+To load data into R, export it from LANS which creates a folder for each analysis with sub folders **dat** containing the aggregated information about the different ROIs (in text file format) and **mat** containing the raw ion maps (in Matlab file format). Both of these can be imported easily with this package. For easier demonstration **lans2r** bundles a set of 3 analyses (folders `analysis1`, `analysis2` and `analysis3`) with the package sources.
+
+```{r, message=FALSE, warning=FALSE}
+library(lans2r)
+library(dplyr)
+library(knitr)
+folder <- system.file("extdata", "nanosims_data", package = "lans2r") # data base directory
+```
+
+### ROI overview data
+
+This loads the ROI overview data for the 3 analyses and assigns some additional information to the analyses (here rather random, column `info`). Since the parameters `quiet=F` indicates that information messages should be provided, it also outputs a summary of the loaded data.
+
+```{r}
+data <- 
+  load_LANS_summary (
+    analysis = c("analysis1", "analysis2", "analysis3"), # the analysis folders
+    base_dir = folder, # the data base director
+    load_zstacks = T, # whether to load z-stacks as well (have to be exported from LANS!)
+    info = c("turtle", "jetpack", "pizza"), # any additional information about the analyses
+    quiet = F # output information about the files
+  ) 
+```
+
+To calculate ratios and abundances, simply specificy which ions you would like to ratio. Note: for convenience, we make use of the pipe operator `%>%` for chaining multiple operations. For more information on the pipe, take a look at the [magrittr package](https://CRAN.R-project.org/package=magrittr). 
+
+```{r}
+data <- data %>% 
+  calculate_sums(c(`13C`, `12C`), c(`15N12C`, `14N12C`)) %>% 
+  calculate_ratios(c(`13C`, `12C`), c(`15N12C`, `14N12C`), c(`13C+12C`, `15N12C+14N12C`)) %>% 
+  calculate_abundances(c(`13C`, `12C`), c(`15N12C`, `14N12C`)) 
+```
+
+For additional operations, one can use the more generic `calculate` function and provide custom functions for value and error calculations and name construction. Here, we have APE (atom percent enrichment) as an example. For additional examples on `calculate`, see the `vignette("lans2r-calculate")`.
+
+```{r}
+data <- data %>% 
+  mutate(F13C_natural = 1.11/100, F15N_natural = 0.366/100) %>% 
+  calculate(
+    data_type = "APE",
+    c(`13C F`, `F13C_natural`, `13C F sigma`), 
+    c(`15N12C F`, `F15N_natural`, `15N12C F sigma`),
+    # calculate the APE value as the fractional abundance enrichment above natural
+    value_fun = function(val, nat, sigma) 100*(val - nat),
+    # assume the error in natural abundance is negligible so only F error propagates
+    error_fun = function(val, nat, sigma) 100*sigma,
+    # replace the F in the existing columnes with APE to make the new variable
+    name_fun = function(val, ...) sub("F", "APE [%]", deparse(substitute(val)))
+  )
+```
+
+
+#### Overview
+
+Let's take a look at the first couple of rows of the data frame.
+
+```{r, warning=FALSE}
+data %>% head(n=10) %>% knitr::kable()
+```
+
+Since this is now in long format so it's easy to have both `value` and the `sigma` error, it's hard to see line by line what is going on, let's look just at `analysis1` and recast the values into a wide format using the `spread_data` function.
+
+```{r}
+data %>% spread_data() %>% head(n=10) %>% kable()
+```
+
+Or for more specific overviews, for example, only the abundance and APE, only the data values (excluding the errors) and only the first plane of the first few ROIs
+
+```{r}
+data %>% filter(data_type %in% c("abundance", "APE"), plane == "1", ROI < 4) %>% 
+  spread_data(errors = FALSE) %>% kable()
+```
+
+#### Plotting
+
+Plot all the data using the *ggplot* package.
+
+```{r, fig.width = 12, fig.height = 8}
+library(ggplot2)
+data %>% 
+  ggplot() +
+  aes(size, value, color = paste(analysis, info), shape = plane) + 
+  geom_errorbar(aes(ymin = value - 2*sigma, ymax = value + 2*sigma), colour="black", width = 0) +
+  geom_point(size=3) + 
+    labs(x = expression("ROI size ["*mu*"m"^2*"]"), y="", 
+         title = expression("ROI summary (2"*sigma*" error bars, may be smaller than symbols)"),
+         color = "Analysis") + 
+  facet_wrap(~variable, scales="free", nrow = 2) + 
+  theme_bw()
+```
+
+Focus in on the combined counts (not the individual planes from the z-stack) and look just at ratios:
+
+```{r, fig.width = 6, fig.height = 6}
+last_plot() %+% (data %>% filter(plane == "all", data_type == "ratio"))
+```
+
+### Ion maps
+
+Again, loading the ion maps for all 3 analyses.
+
+```{r}
+maps <- 
+  load_LANS_maps (
+    analysis = c("analysis1", "analysis2", "analysis3"),
+    base_dir = folder
+  ) 
+```
+
+The data in these looks similar to the summary data frame except that it is broken out pixel by pixel:
+
+```{r}
+maps %>% head(n=10) %>% kable()
+```
+
+To make it easier to plot these kind of maps, **lans2r** provides a convenience functoin `plot_maps` but of course this could be adjusted as needed (look at the source code to see how this one is made). By default ion counts are normalized for each ion so they can be visualized on the same scale. 
+
+```{r, fig.width = 12, fig.height = 14}
+plot_maps(maps)
+```
+
+Focusing in on just one ion, we can ditch the normalization, and let's also not draw ROIs for a direct look. Also, because it's a `ggplot`, all ggplot modifications of the plot are fair game.
+
+```{r, fig.width = 10, fig.height = 8}
+plot_maps(maps %>% filter(variable == "14N12C", analysis %in% c("analysis1", "analysis2")), 
+          normalize = FALSE, draw_ROIs = FALSE) + 
+  theme(legend.position = "right") + labs(fill = "ion count")
+```
+
+## Future directions
+
+Note that for plotting maps, *lans2r* does not (yet) support any smoothing so although the `plot_maps` function theoretically supports plotting ratios and abundances as well (which can be calculated from the maps data the same way using `calculate_ratios` and `calculate_abundances`), in practice this does not work so well because individual pixels often have extreme values offsetting proper scaling. This might be part of future expansions if the package sees a lot of use so please email with suggestions if you find it helpful.
+
