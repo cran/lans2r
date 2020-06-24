@@ -2,7 +2,7 @@ context("Plotting")
 
 test_that("test that plotting is working correctly", {
   
-  expect_error(plot_maps(data_frame()), "no rows")
+  expect_error(plot_maps(tibble()), "no rows")
   
   expect_true(file.exists(folder <- system.file("extdata", "nanosims_data", "analysis1", "mat", package = "lans2r")))
   expect_true(is(data <- read_map_data(folder), "data.frame"))

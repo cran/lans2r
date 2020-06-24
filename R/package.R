@@ -4,11 +4,11 @@
 #' @import dplyr
 #' @import tidyr
 #' @import ggplot2
-#' @import lazyeval
 #' @importFrom stats setNames sigma var
 #' @importFrom utils read.table
 #' @importFrom R.matlab readMat
 #' @importFrom reshape2 melt
+#' @importFrom rlang !! !!!
 NULL
 
 # quiets concerns of R CMD check about . that appears in pipelines

@@ -39,7 +39,7 @@ test_that("possible to read all roi data", {
   expect_true(file.exists(folder <- system.file("extdata", "nanosims_data", "analysis1", "dat", package = "lans2r")))
   
   expect_message(read_roi_data(folder), ".*read successfully")
-  expect_silent(data <- read_roi_data(folder, quiet = T))
+  expect_silent(data <- read_roi_data(folder, quiet = TRUE))
   
   # data checks
   expect_equal(data$variable %>% unique(), c("12C", "13C", "14N12C", "15N12C"))
@@ -77,7 +77,7 @@ test_that("test that it is possible to read all map data in a folder", {
   expect_true(file.exists(folder <- system.file("extdata", "nanosims_data", "analysis1", "mat", package = "lans2r")))
   
   expect_message(read_map_data(folder), ".*read successfully")
-  expect_silent(data <- read_map_data(folder, quiet = T))
+  expect_silent(data <- read_map_data(folder, quiet = TRUE))
   
   # data checks
   expect_equal(data$variable %>% unique(), c("12C", "13C", "14N12C", "15N12C"))

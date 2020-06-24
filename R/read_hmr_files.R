@@ -14,8 +14,8 @@ load_HMR <- function(folder, prefix, suffix = ".hmr_txt") {
   pattern <- paste0(prefix,"(.*)", suffix) # file pattern
   for (file in dir(folder, pattern = pattern)) {
     ion <- sub(pattern, "\\1",file)
-    info <- read.table(file.path(folder, file), header=F, skip=1, fill=T, comment.char = "", sep="\t")
-    data <- read.table(file.path(folder, file), header=T, skip=9, fill=T, comment.char = "", sep="\t")
+    info <- read.table(file.path(folder, file), header= FALSE, skip=1, fill= TRUE, comment.char = "", sep="\t")
+    data <- read.table(file.path(folder, file), header= TRUE, skip=9, fill= TRUE, comment.char = "", sep="\t")
     df <- rbind(df,
                 mutate(data, 
                        ion = ion,

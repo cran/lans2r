@@ -1,12 +1,12 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ---- message=FALSE, warning=FALSE--------------------------------------------
 library(lans2r)
 library(dplyr)
 library(knitr)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 set.seed(123) # set random seed
 test_data <- 
-  data_frame(
+  tibble(
     ROI = rep(1:5, times = 4),
     variable = rep(LETTERS[1:4], each = 5),
     value = rpois(20,lambda = 10),
@@ -15,7 +15,7 @@ test_data <-
   )
 kable(test_data, d = 2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # functions to calculate values and errors and derive names from the names of the variables used
 # note that they all have to take the same parameters (even if they are not used)
 my_value_fun <- function(x, y, x.err, y.err) x*y
@@ -33,7 +33,7 @@ derived_data <-
     value_fun = my_value_fun, error_fun = my_error_fun, name_fun = my_name_fun)
 kable(derived_data, d = 2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 my_value_fun <- function(x, y, x.err, y.err) x+y
 my_error_fun <- function(x, y, x.err, y.err) sqrt(x.err^2 + y.err^2)
 my_name_fun <- function(x, y, x.err, y.err) paste0(deparse(substitute(x)), "+", deparse(substitute(y)))
@@ -49,7 +49,7 @@ derived_data2 <-
     value_fun = my_value_fun, error_fun = my_error_fun, name_fun = my_name_fun)
 kable(derived_data2, d = 2)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 derived_data3 <-
   derived_data2 %>% 
   calculate(
@@ -62,7 +62,7 @@ derived_data3 <-
     name_fun = function(name, x, y, z) name)
 kable(derived_data3, d = 2)
 
-## ---- fig.width = 9, fig.height = 8--------------------------------------
+## ---- fig.width = 9, fig.height = 8-------------------------------------------
 library(ggplot2)
 derived_data3 %>% 
   ggplot() +
@@ -71,7 +71,7 @@ derived_data3 %>%
   geom_point() +
   facet_wrap(~data_type, scales = "free")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 derived_data3 %>% spread_data() %>% kable(d = 2)
 derived_data3 %>% spread_data(errors = FALSE) %>% kable(d = 2)
 

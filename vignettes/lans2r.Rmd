@@ -29,13 +29,13 @@ data <-
   load_LANS_summary (
     analysis = c("analysis1", "analysis2", "analysis3"), # the analysis folders
     base_dir = folder, # the data base director
-    load_zstacks = T, # whether to load z-stacks as well (have to be exported from LANS!)
+    load_zstacks = TRUE, # whether to load z-stacks as well (have to be exported from LANS!)
     info = c("turtle", "jetpack", "pizza"), # any additional information about the analyses
-    quiet = F # output information about the files
+    quiet = FALSE # output information about the files
   ) 
 ```
 
-To calculate ratios and abundances, simply specificy which ions you would like to ratio. Note: for convenience, we make use of the pipe operator `%>%` for chaining multiple operations. For more information on the pipe, take a look at the [magrittr package](https://CRAN.R-project.org/package=magrittr). 
+To calculate ratios and abundances, simply specify which ions you would like to ratio. Note: for convenience, we make use of the pipe operator `%>%` for chaining multiple operations. For more information on the pipe, take a look at the [magrittr package](https://CRAN.R-project.org/package=magrittr). 
 
 ```{r}
 data <- data %>% 
@@ -126,7 +126,7 @@ The data in these looks similar to the summary data frame except that it is brok
 maps %>% head(n=10) %>% kable()
 ```
 
-To make it easier to plot these kind of maps, **lans2r** provides a convenience functoin `plot_maps` but of course this could be adjusted as needed (look at the source code to see how this one is made). By default ion counts are normalized for each ion so they can be visualized on the same scale. 
+To make it easier to plot these kind of maps, **lans2r** provides a convenience function `plot_maps` but of course this could be adjusted as needed (look at the source code to see how this one is made). By default ion counts are normalized for each ion so they can be visualized on the same scale. 
 
 ```{r, fig.width = 12, fig.height = 14}
 plot_maps(maps)

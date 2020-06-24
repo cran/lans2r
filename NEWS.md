@@ -1,4 +1,18 @@
-# lans2r 1.0.0
+# lans2r 1.1.0
+
+## Major changes
+
+No major functionality changes.
+
+## Bug fixes
+
+The following changes were made to comply with changes in package dependencies and base R:
+
+ - this package now adheres to the strict use of `TRUE` and `FALSE` instead of `T` and `F`
+ - this package now no longer uses the deprecated `dplyr` helper functions `mutate_()`, `filter_()`, `select_()`, etc.
+ - this package now switched to using `rlang` instead of `lazyeval`
+
+# lans2r 1.0.5
 
 ## Major Features
 
@@ -15,5 +29,5 @@
  
 #### Visualization
 
- - plot panelled ion maps with ROI outlines for any number of ions and analyses
+ - plot paneled ion maps with ROI outlines for any number of ions and analyses
  

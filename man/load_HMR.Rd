@@ -7,11 +7,17 @@
 load_HMR(folder, prefix, suffix = ".hmr_txt")
 }
 \arguments{
-\item{folder}{- the folder where the HMR files are}
+\item{folder}{\itemize{
+\item the folder where the HMR files are
+}}
 
-\item{prefix}{- the prefix for the set of hmr files}
+\item{prefix}{\itemize{
+\item the prefix for the set of hmr files
+}}
 
-\item{suffix}{- the suffix for the set of hmr files}
+\item{suffix}{\itemize{
+\item the suffix for the set of hmr files
+}}
 }
 \description{
 See HMR vignette for examples.

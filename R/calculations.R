@@ -18,51 +18,50 @@ calculate <- function(data, data_type, ..., value_fun,
                       error_fun = function(...) return(NA), 
                       name_fun = default_name,
                       filter_new = NULL,
-                      quiet = F) {
+                      quiet = FALSE) {
   
   # checks
   sapply(c("variable", "value", "data_type"), col_check, data, sys.call())
   
   # default name function (concatenate the deparsed expression)
   default_name <- function(...) {
-    lazy_dots(...) %>% 
-      sapply(function(lexp) deparse(lexp$exp, width.cutoff = 200L), simplify = TRUE) %>% 
+    rlang::enexprs(...) %>% 
+      sapply(rlang::as_label, simplify = TRUE) %>% 
       paste(collapse = " ")
   }
   
+  # function to parse parameters passed using c()
+  parse_params <- function(param_quo) {
+    if (rlang::quo_is_call(param_quo) && rlang::call_name(param_quo) == "c") 
+      rlang::call_args(param_quo)
+    else
+      list(rlang::get_expr(param_quo))
+  }
+  
   # generate parameter sets
-  param_exps <- lazy_dots(...)
-  params <- lapply(param_exps, function(lexp) {
-    strsplit(sub("^c\\((.+)\\)$", "\\1", deparse(lexp$expr,  width.cutoff = 200L)), ",\\s?")[[1]]
-  })
+  param_exps <- rlang::enquos(...) 
+  parsed_params <- lapply(param_exps, parse_params)
   
   # determine new variable names (calling the name_fun)
-  var_new <- sapply(params, function(ps) {
-    sprintf("f(%s)", paste(ps, collapse = ",")) %>%  # put together function call
-      lazyeval::as.lazy(parent.frame()) %>% # generate call
-      lazyeval::interp(f = name_fun) %>% # inject name function
-      lazy_eval() # evaluate
+  var_new <- sapply(parsed_params, function(ps_exps) {
+    rlang::expr(name_fun(!!!ps_exps)) %>% rlang::eval_tidy()
   })
   
   # generate the value and error expressions
   val_fields <-
-    lapply(params, function(ps) {
-      sprintf("f(%s)", paste(ps, collapse = ",")) %>%  # put together function call
-        lazyeval::as.lazy(parent.frame()) %>% # generate call
-        lazyeval::interp(f = value_fun) # inject value function
+    lapply(parsed_params, function(ps_exps) {
+      rlang::expr(value_fun(!!!ps_exps))
     }) %>% setNames(var_new)
   
   err_fields <-
-    lapply(params, function(ps) {
-      sprintf("f(%s)", paste(ps, collapse = ",")) %>%  # put together function call
-        lazyeval::as.lazy(parent.frame()) %>% # generate call
-        lazyeval::interp(f = error_fun) # inject value function
+    lapply(parsed_params, function(ps_exps) {
+      rlang::expr(error_fun(!!!ps_exps))
     }) %>% setNames(var_new)
   
   # figure out what are the actual new variables (includes overriding old ones)
   new_data_type <- data_type
   var_old <- data$variable %>% unique() %>% setdiff(var_new)
-  var_new_select <- lapply(var_old, function(i) lazyeval::interp(~-var, var = as.name(i)))
+  var_new_select <- lapply(var_old, function(i) rlang::expr(-!!rlang::sym(i)))
   
   # spread data into wide format (relies on groups getting carried through the spread)
   df <- spread_data(data, values = TRUE, errors = TRUE)
@@ -77,30 +76,29 @@ calculate <- function(data, data_type, ..., value_fun,
       # calculate values and error within in each group
       values <- 
         df_group %>% 
-        mutate_(.dots = val_fields) %>% 
+        mutate(!!!val_fields) %>% 
         select(-ends_with("sigma")) %>% 
-        select_(.dots = var_new_select) %>% 
-        tidyr::gather_("variable", "value", var_new) 
+        select(!!!var_new_select) %>% 
+        tidyr::gather("variable", "value", !!!var_new) 
       
       error <- 
         df_group %>% 
-        mutate_(.dots = err_fields) %>% 
+        mutate(!!!err_fields) %>% 
         select(-ends_with("sigma")) %>% 
-        select_(.dots = var_new_select) %>% 
-        tidyr::gather_("variable", "sigma", var_new) 
+        select(!!!var_new_select) %>% 
+        tidyr::gather("variable", "sigma", !!!var_new) 
       
       suppressMessages(left_join(values, error))  %>% 
-        mutate(variable = as.character(variable)) %>% # don't like the factor it introduces
+        mutate(variable = as.character(.data$variable)) %>% # don't like the factor it introduces
         return()
     }) %>% 
     filter(!is.na(value)) %>% # remove calculations that don't exist
     mutate(data_type = new_data_type)
   
   # filter out parts of it
-  if (!missing(filter_new)) {
-    apply_filter <- lazy(filter_new)
-    new_data_add <- new_data %>% 
-      filter_(.dots = list(apply_filter))
+  filter_new_quo <- rlang::enquo(filter_new)
+  if (!rlang::quo_is_missing(filter_new_quo) && !rlang::quo_is_null(filter_new_quo)) {
+    new_data_add <- filter(new_data, !!filter_new_quo)
   } else {
     new_data_add <- new_data
   }
@@ -112,7 +110,8 @@ calculate <- function(data, data_type, ..., value_fun,
         "INFO: %d '%s' values + errors calculated, %d added (subset: %s)",
         "\n      values added (stored in 'variable' column): %s"),
       new_data %>%  nrow(), new_data_type, nrow(new_data_add),
-      if(!missing(filter_new)) deparse(apply_filter$exp) else "all",
+      if(!rlang::quo_is_missing(filter_new_quo) && !rlang::quo_is_null(filter_new_quo)) 
+        rlang::expr_deparse(filter_new_quo) else "all",
       new_data_add %>% 
         group_by(variable) %>% tally() %>%
         mutate(label = paste0("'", variable, "' (", n, "x)")) %>% 
@@ -146,7 +145,7 @@ calculate <- function(data, data_type, ..., value_fun,
 #' @return the original data frame with the sums information appended (data_type == "ion_sum")
 #' @family calculations
 #' @export
-calculate_sums <- function(data, ..., name_fun = default_name, quiet = F) {
+calculate_sums <- function(data, ..., name_fun = default_name, quiet = FALSE) {
   
   # function to sum up arbitrary number of vectors by entry
   sum_vectors <- 
@@ -158,8 +157,8 @@ calculate_sums <- function(data, ..., name_fun = default_name, quiet = F) {
   
   # default sums name
   default_name <- function(...) {
-    lazy_dots(...) %>% 
-      sapply(function(lexp) deparse(lexp$exp), simplify = TRUE) %>% 
+    rlang::enexprs(...) %>% 
+      sapply(rlang::as_label, simplify = TRUE) %>% 
       paste(collapse = "+")
   }
   
@@ -193,7 +192,7 @@ calculate_sums <- function(data, ..., name_fun = default_name, quiet = F) {
 #' @return the original data frame with the ratio information appended (all ratios have data_type == "ratio")
 #' @family calculations
 #' @export
-calculate_ratios <- function(data, ..., name_fun = default_name, quiet = F) {
+calculate_ratios <- function(data, ..., name_fun = default_name, quiet = FALSE) {
   
   # default name fun
   default_name <- function(m, M) paste0(deparse(substitute(m)),"/",deparse(substitute(M)))
@@ -226,7 +225,7 @@ calculate_ratios <- function(data, ..., name_fun = default_name, quiet = F) {
 #' @return the original data frame with the fractional abundance information appended (all fractional abundances are in % and have data_type == "abundance")
 #' @family calculations
 #' @export
-calculate_abundances <- function(data, ..., name_fun = default_name, quiet = F) {
+calculate_abundances <- function(data, ..., name_fun = default_name, quiet = FALSE) {
   
   # default name fun
   default_name = function(m, M) paste(deparse(substitute(m)), "F")

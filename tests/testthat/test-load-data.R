@@ -23,7 +23,7 @@ test_that("test that it is possible to load multiple LANS summaries", {
     ".*read successfully.*Z-stacks were not loaded")
   expect_silent(
     data <- load_LANS_summary (analysis = c("analysis1", "analysis2", "analysis3"), 
-                               base_dir = folder, load_zstacks = FALSE, quiet = T))
+                               base_dir = folder, load_zstacks = FALSE, quiet = TRUE))
   
   # data checks
   expect_equal(data$variable %>% unique(), c("12C", "13C", "14N12C", "15N12C"))
@@ -42,7 +42,7 @@ test_that("test that it is possible to load multiple LANS summaries", {
     ".*read successfully.*Z-stacks were loaded")
   expect_silent(
     data <- load_LANS_summary (analysis = c("analysis1", "analysis2", "analysis3"), 
-                               base_dir = folder, load_zstacks = TRUE, quiet = T))
+                               base_dir = folder, load_zstacks = TRUE, quiet = TRUE))
   
   # data checks
   expect_equal(data$variable %>% unique(), c("12C", "13C", "14N12C", "15N12C"))
@@ -59,7 +59,7 @@ test_that("test that it is possible to load multiple LANS summaries", {
     data <- load_LANS_summary (analysis = c("analysis1", "analysis2", "analysis3"), 
                                information = c("run1", "run2", "run3"),
                                date = as.Date(c("2015-01-01", "2016-02-25", "2017-03-04")),
-                               base_dir = folder, load_zstacks = FALSE, quiet = T))
+                               base_dir = folder, load_zstacks = FALSE, quiet = TRUE))
   
   expect_equal(
     data %>% select(analysis, information, date) %>% unique(),
@@ -79,7 +79,7 @@ test_that("test that it is possible to load LANS maps", {
   expect_true(file.exists(folder <- system.file("extdata", "nanosims_data", package = "lans2r")))
   
   expect_silent(maps <- load_LANS_maps (analysis = c("analysis1", "analysis2", "analysis3"), 
-                                        base_dir = folder, quiet = T))
+                                        base_dir = folder, quiet = TRUE))
   
   # check data
   expect_equal(nrow(maps), as.integer(256^2 * 4 * 3)) 

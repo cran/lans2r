@@ -11,7 +11,7 @@
 #' @param normalize whether to normalize the intensity scale for each panel (default TRUE)
 #' @param color_scale what color scale to use for high and low intensity, default is black & white
 #' @export
-plot_maps <- function(data, draw_ROIs = T, normalize = T, color_scale = c("black", "white")) {
+plot_maps <- function(data, draw_ROIs = TRUE, normalize = TRUE, color_scale = c("black", "white")) {
   if (nrow(data) == 0)
     stop("no rows in data frame")
   
@@ -76,13 +76,14 @@ extract_roi_boundaries <- function(data) {
   # calculate border
   suppressMessages(
     data %>% filter(ROI > 0) %>% 
-      group_by(ROI, add=TRUE) %>% 
-      filter(variable == variable[1]) %>%  # calculate for just one variable, for speed
-      mutate_(.dots = list(~is_on_border(x.px, y.px)) %>% setNames("roi_border")) %>% 
+      group_by(ROI, add = TRUE) %>% 
+      filter(variable == .data$variable[1]) %>%  # calculate for just one variable, for speed
+      mutate(roi_border = is_on_border(.data$x.px, .data$y.px)) %>% 
       ungroup() %>% 
-      filter_(.dots = list(~roi_border)) %>% 
-      select(-variable) %>% 
-      inner_join(data %>% group_by(ROI, variable, add=TRUE) %>% select(variable) %>% distinct()) %>% 
-      arrange_(.dots = c("x.px", "y.px")) # merge variables back in
+      filter(.data$roi_border) %>% 
+      select(-.data$variable) %>% 
+      inner_join(data %>% group_by(.data$ROI, .data$variable, add = TRUE) %>% 
+                   select(.data$variable) %>% distinct()) %>% 
+      arrange(.data$x.px, .data$y.px) # merge variables back in
   )
 }

@@ -22,7 +22,7 @@ For simple illustration, this is a completely contrived artifical data set:
 ```{r}
 set.seed(123) # set random seed
 test_data <- 
-  data_frame(
+  tibble(
     ROI = rep(1:5, times = 4),
     variable = rep(LETTERS[1:4], each = 5),
     value = rpois(20,lambda = 10),
@@ -96,7 +96,7 @@ kable(derived_data3, d = 2)
 
 # Data visualization
 
-This data format makes it easy to have arbitrarily elaborate derived quantities and dynamically include the same calculation for multiple sets of variables. It is also a format that lends itself very well to visualiztion:
+This data format makes it easy to have arbitrarily elaborate derived quantities and dynamically include the same calculation for multiple sets of variables. It is also a format that lends itself very well to visualization:
 
 ```{r, fig.width = 9, fig.height = 8}
 library(ggplot2)

@@ -4,8 +4,12 @@
 \alias{plot_maps}
 \title{Plot NanoSIMS ion maps}
 \usage{
-plot_maps(data, draw_ROIs = T, normalize = T, color_scale = c("black",
-  "white"))
+plot_maps(
+  data,
+  draw_ROIs = TRUE,
+  normalize = TRUE,
+  color_scale = c("black", "white")
+)
 }
 \arguments{
 \item{data}{the ion maps data frame}

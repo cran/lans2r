@@ -1,26 +1,26 @@
-## ---- message=FALSE, warning=FALSE---------------------------------------
+## ---- message=FALSE, warning=FALSE--------------------------------------------
 library(lans2r)
 library(dplyr)
 library(knitr)
 folder <- system.file("extdata", "nanosims_data", package = "lans2r") # data base directory
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data <- 
   load_LANS_summary (
     analysis = c("analysis1", "analysis2", "analysis3"), # the analysis folders
     base_dir = folder, # the data base director
-    load_zstacks = T, # whether to load z-stacks as well (have to be exported from LANS!)
+    load_zstacks = TRUE, # whether to load z-stacks as well (have to be exported from LANS!)
     info = c("turtle", "jetpack", "pizza"), # any additional information about the analyses
-    quiet = F # output information about the files
+    quiet = FALSE # output information about the files
   ) 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data <- data %>% 
   calculate_sums(c(`13C`, `12C`), c(`15N12C`, `14N12C`)) %>% 
   calculate_ratios(c(`13C`, `12C`), c(`15N12C`, `14N12C`), c(`13C+12C`, `15N12C+14N12C`)) %>% 
   calculate_abundances(c(`13C`, `12C`), c(`15N12C`, `14N12C`)) 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data <- data %>% 
   mutate(F13C_natural = 1.11/100, F15N_natural = 0.366/100) %>% 
   calculate(
@@ -35,17 +35,17 @@ data <- data %>%
     name_fun = function(val, ...) sub("F", "APE [%]", deparse(substitute(val)))
   )
 
-## ---- warning=FALSE------------------------------------------------------
+## ---- warning=FALSE-----------------------------------------------------------
 data %>% head(n=10) %>% knitr::kable()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data %>% spread_data() %>% head(n=10) %>% kable()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data %>% filter(data_type %in% c("abundance", "APE"), plane == "1", ROI < 4) %>% 
   spread_data(errors = FALSE) %>% kable()
 
-## ---- fig.width = 12, fig.height = 8-------------------------------------
+## ---- fig.width = 12, fig.height = 8------------------------------------------
 library(ggplot2)
 data %>% 
   ggplot() +
@@ -58,23 +58,23 @@ data %>%
   facet_wrap(~variable, scales="free", nrow = 2) + 
   theme_bw()
 
-## ---- fig.width = 6, fig.height = 6--------------------------------------
+## ---- fig.width = 6, fig.height = 6-------------------------------------------
 last_plot() %+% (data %>% filter(plane == "all", data_type == "ratio"))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 maps <- 
   load_LANS_maps (
     analysis = c("analysis1", "analysis2", "analysis3"),
     base_dir = folder
   ) 
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 maps %>% head(n=10) %>% kable()
 
-## ---- fig.width = 12, fig.height = 14------------------------------------
+## ---- fig.width = 12, fig.height = 14-----------------------------------------
 plot_maps(maps)
 
-## ---- fig.width = 10, fig.height = 8-------------------------------------
+## ---- fig.width = 10, fig.height = 8------------------------------------------
 plot_maps(maps %>% filter(variable == "14N12C", analysis %in% c("analysis1", "analysis2")), 
           normalize = FALSE, draw_ROIs = FALSE) + 
   theme(legend.position = "right") + labs(fill = "ion count")

@@ -4,24 +4,39 @@
 \alias{load_LANS_maps}
 \title{Load LANS ion map data}
 \usage{
-load_LANS_maps(analysis, ..., base_dir = ".", ion_data_only = TRUE,
-  quiet = F)
+load_LANS_maps(
+  analysis,
+  ...,
+  base_dir = ".",
+  ion_data_only = TRUE,
+  quiet = FALSE
+)
 }
 \arguments{
-\item{analysis}{- vector of LANS analysis folder names}
+\item{analysis}{\itemize{
+\item vector of LANS analysis folder names
+}}
 
-\item{...}{- vectors of additional information to attach to each analysis, each argument has to have the same length as the 
-'analysis' parameter (or length 1)}
+\item{...}{\itemize{
+\item vectors of additional information to attach to each analysis, each argument has to have the same length as the
+'analysis' parameter (or length 1)
+}}
 
-\item{base_dir}{- the directory where all the analysis folders are located (defaults to current directory)}
+\item{base_dir}{\itemize{
+\item the directory where all the analysis folders are located (defaults to current directory)
+}}
 
-\item{ion_data_only}{- whether to import only ion data [TRUE by default], rather than any derived files (e.g. ratios calculated 
+\item{ion_data_only}{\itemize{
+\item whether to import only ion data (\code{TRUE} by default), rather than any derived files (e.g. ratios calculated
 within LANS). Recommend using \link{calculate_ratios} and \link{calculate_abundances} to process the raw ion counts in easy
-format and good error propagation.}
+format and good error propagation.
+}}
 
-\item{quiet}{- whether to report information on the loaded data or not}
+\item{quiet}{\itemize{
+\item whether to report information on the loaded data or not
+}}
 }
 \description{
-Load the full ion map data (incl. ROI locations) exported from LANS analyses and attach additional information to each analysis. 
+Load the full ion map data (incl. ROI locations) exported from LANS analyses and attach additional information to each analysis.
 Uses \link{read_map_data} to read individual matlab export files.
 }
