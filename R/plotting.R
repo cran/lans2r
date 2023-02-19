@@ -76,14 +76,14 @@ extract_roi_boundaries <- function(data) {
   # calculate border
   suppressMessages(
     data %>% filter(ROI > 0) %>% 
-      group_by(ROI, add = TRUE) %>% 
+      group_by(ROI, .add = TRUE) %>% 
       filter(variable == .data$variable[1]) %>%  # calculate for just one variable, for speed
       mutate(roi_border = is_on_border(.data$x.px, .data$y.px)) %>% 
       ungroup() %>% 
       filter(.data$roi_border) %>% 
-      select(-.data$variable) %>% 
-      inner_join(data %>% group_by(.data$ROI, .data$variable, add = TRUE) %>% 
-                   select(.data$variable) %>% distinct()) %>% 
+      select(-"variable") %>% 
+      inner_join(data %>% group_by(.data$ROI, .data$variable, .add = TRUE) %>% 
+                   select("variable") %>% distinct(), multiple = "all") %>% 
       arrange(.data$x.px, .data$y.px) # merge variables back in
   )
 }

@@ -62,7 +62,7 @@ test_that("test that it is possible to load multiple LANS summaries", {
                                base_dir = folder, load_zstacks = FALSE, quiet = TRUE))
   
   expect_equal(
-    data %>% select(analysis, information, date) %>% unique(),
+    data %>% select("analysis", "information", "date") %>% unique(),
     structure(
       list(analysis = c("analysis1", "analysis2", "analysis3"), 
            information = c("run1", "run2", "run3"), 

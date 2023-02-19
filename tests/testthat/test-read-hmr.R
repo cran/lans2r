@@ -9,7 +9,7 @@ test_that("test that can read HMR file", {
   
   # check data
   expect_equal({
-    summary <- hmr %>% select(-step, -voltage, -cts) %>% distinct()
+    summary <- hmr %>% select(-"step", -"voltage", -"cts") %>% distinct()
     summary$ion
   }, c("1H", "2H"))
   

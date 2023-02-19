@@ -3,7 +3,7 @@
 
 # lans2r
 
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/lans2r)](https://cran.r-project.org/package=lans2r)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/lans2r)](https://cran.r-project.org/package=lans2r)
 [![Build
 Status](https://travis-ci.org/KopfLab/lans2r.svg?branch=master)](https://travis-ci.org/KopfLab/lans2r)
 [![AppVeyor Build
@@ -43,13 +43,13 @@ library(lans2r)
 
 A concise overview demonstrating the functionality of the **lans2r**
 package is provided in the [main
-vignette](https://www.kopflab.org/lans2r/articles/lans2r.html) for the
+vignette](https://lans2r.kopflab.org/articles/lans2r.html) for the
 package, which can also be accessed from within R by calling
 `vignette("lans2r")`. Additional vignettes provide details on extended
 functionality and can be accessed easily by browsing the package
 vignettes from within R calling `browseVignettes("lans2r")`. For details
-on individual functions, please consult the package help (e.g.
-`?load_LANS_summary`).
+on individual functions, please consult the package help
+(e.g. `?load_LANS_summary`).
 
 ## Example
 

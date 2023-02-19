@@ -2,7 +2,7 @@ Package: lans2r
 Title: Work with Look at NanoSIMS Data in R
 Description: R interface for working with nanometer scale secondary ion mass 
     spectrometry (NanoSIMS) data exported from Look at NanoSIMS. 
-Version: 1.1.0
+Version: 1.2.0
 Authors@R: person("Sebastian", "Kopf", email = "sebastian.kopf@colorado.edu",
     role = c("aut", "cre"))
 URL: https://github.com/KopfLab/lans2r
@@ -12,12 +12,11 @@ Imports: dplyr, tidyr, reshape2, ggplot2, rlang, R.matlab
 Suggests: covr, testthat, knitr, rmarkdown
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
-LazyData: true
 VignetteBuilder: knitr, rmarkdown
-RoxygenNote: 7.0.2
+RoxygenNote: 7.2.3
 NeedsCompilation: no
-Packaged: 2020-06-24 03:49:26 UTC; sk
+Packaged: 2023-02-19 07:06:25 UTC; sk
 Author: Sebastian Kopf [aut, cre]
 Maintainer: Sebastian Kopf <sebastian.kopf@colorado.edu>
 Repository: CRAN
-Date/Publication: 2020-06-24 05:20:03 UTC
+Date/Publication: 2023-02-19 07:20:02 UTC

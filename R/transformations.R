@@ -14,13 +14,13 @@ spread_data <- function(data, values = TRUE, errors = TRUE) {
   # spread data into wide format
   if (values)
     val_df <- data %>% 
-      select(-sigma, -data_type) %>% 
+      select(-"sigma", -"data_type") %>% 
       tidyr::spread(variable, value)
   
   if (errors)
     err_df <- data %>% 
       mutate(variable = paste(variable, "sigma")) %>% 
-      select(-value, -data_type) %>% 
+      select(-"value", -"data_type") %>% 
       tidyr::spread(variable, sigma)
   
   # combine

@@ -27,7 +27,7 @@ load_LANS_summary <- function(analysis, ..., base_dir = ".", ion_data_only = TRU
       mutate(analysis = i)
   }) %>% bind_rows()
   
-  full_join(info, data, by = "analysis")
+  full_join(info, data, by = "analysis", multiple = "all")
 }
 
 #' Load LANS ion map data
@@ -56,7 +56,7 @@ load_LANS_maps <- function(analysis, ..., base_dir = ".", ion_data_only = TRUE, 
       mutate(analysis = i)
   }) %>% bind_rows()
   
-  full_join(info, data, by = "analysis")
+  full_join(info, data, by = "analysis", multiple = "all")
 }
 
 

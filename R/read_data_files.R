@@ -45,7 +45,7 @@ read_roi_data <- function(dat_folder, ion_data_only = TRUE, load_zstacks = TRUE,
   if (load_zstacks) {
     zstack_data <- 
       lapply(zstack_files, read_roi_ion_zstack_data_file) %>% bind_rows() %>% 
-      left_join(roi_data %>% select(-plane, -value, -sigma), by = c("ROI", "data_type", "variable"))
+      left_join(roi_data %>% select(-"plane", -"value", -"sigma"), by = c("ROI", "data_type", "variable"))
   } else {
     zstack_data <- tibble()
   }
@@ -89,17 +89,17 @@ read_roi_ion_data_file <- function (file) {
       sigma = iso.errN(.data$MEANi) 
     ) %>% # recalculating it to be more precise
     select(
-      .data$plane,
-      ROI = .data$`# i`,
-      .data$data_type,
-      .data$variable,
-      value = .data$MEANi,
-      .data$sigma,
-      coord_x = .data$Xi, 
-      coord_y = .data$Yi, 
-      size = .data$SIZEi, 
-      pixels = .data$PIXELSi, 
-      LW_ratio = .data$LWratio
+      "plane",
+      ROI = "# i",
+      "data_type",
+      "variable",
+      value = "MEANi",
+      "sigma",
+      coord_x = "Xi", 
+      coord_y = "Yi", 
+      size = "SIZEi", 
+      pixels = "PIXELSi", 
+      LW_ratio = "LWratio"
     ) %>% as_tibble()
 }
 
@@ -111,7 +111,7 @@ read_roi_ion_zstack_data_file <- function (file) {
   ion <- sub("^([0-9A-Z]+)\\-z.dat$", "\\1", basename(file))
   read.table(file, header = FALSE, skip = 3, comment.char = "", sep = "\t") %>%
     tidyr::gather(var, value, -V1) %>% 
-    rename(plane = .data$V1) %>% 
+    rename(plane = "V1") %>% 
     group_by(.data$plane) %>% 
     mutate(
       data_type = "ion_count",
@@ -119,7 +119,7 @@ read_roi_ion_zstack_data_file <- function (file) {
       ROI = rep(seq(1, n()/2), each = 2),
       col = sub("V(\\d+)", "\\1", var) %>% as.numeric,
       var = ifelse(col %% 2 == 0, "value", "sigma")) %>% 
-    select(-.data$col) %>% 
+    select(-"col") %>% 
     ungroup() %>% 
     tidyr::spread(var, value) %>% 
     mutate(plane = as.character(.data$plane), # to fit with 'all' plane
@@ -186,7 +186,12 @@ read_full_ion_data_file <- function (file) {
   ion <- sub("^(.+)\\.mat$", "\\1", basename(file))
   mat <- R.matlab::readMat(file)
   rois <- mat$CELLS %>% reshape2::melt() %>% 
-    as_tibble() %>% rename (ROI = value)
+    as_tibble() %>% rename(ROI = "value")
+    # NOTE: could replace reshape2::melt with this but not clear it'd be faster
+    # tibble::as_tibble() %>% 
+    # tibble::rowid_to_column(var = "Var1") %>% 
+    # tidyr::pivot_longer(cols = -Var1, names_to = "Var2", values_to = "ROI") %>% 
+    # dplyr::mutate(Var2 = as.integer(gsub("V", "", Var2)))
   mat$IM %>% 
     # melt is significnatly faster than gather for this kind of matrix calculation
     reshape2::melt() %>% as_tibble() %>% 
